@@ -1,127 +1,296 @@
-# 🤖 AI-Powered Chatbot Assistant (Nexus AI)
+# AI-Powered Chatbot Assistant
 
-An enterprise-grade, full-stack conversational AI assistant application featuring a modern glassmorphic ChatGPT/Gemini-style interface, multi-persona reasoning, real-time Server-Sent Events (SSE) streaming, voice input/output (STT & TTS), and document intelligence (RAG-lite).
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688.svg?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![Python](https://img.shields.io/badge/Python-3.10+-3776AB.svg?style=flat-square&logo=python&logoColor=white)](https://python.org)
+[![Uvicorn](https://img.shields.io/badge/Uvicorn-ASGI-499848.svg?style=flat-square)](https://www.uvicorn.org)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
 
-![AI-Powered Chatbot Assistant](https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80)
-
----
-
-## 🌟 Key Features
-
-1. **Modern Glassmorphic Dark UI**:
-   - Designed with curated HSL color palettes, violet/indigo glowing accents, and smooth micro-animations.
-   - Built with Vanilla HTML5, CSS3, and modern ES6+ JavaScript for zero build overhead.
-   - Custom code block styling with language badges, copy-to-clipboard buttons, and syntax-like highlights.
-
-2. **⚡ Real-Time Streaming Responses (SSE)**:
-   - Token-by-token typewriter streaming via Server-Sent Events (`/api/chat/stream`).
-   - Non-blocking asynchronous event generator powered by Python FastAPI.
-
-3. **🎭 Multi-Persona Intelligence**:
-   - 🤖 **General Assistant**: Balanced reasoning and general knowledge.
-   - 💻 **Senior Code Architect**: Generates clean, production-ready code with complexity analysis.
-   - 🎓 **Academic Tutor**: Explains complex computer science, math, and business concepts with intuitive analogies.
-   - ✍️ **Creative & Content Writer**: Crafts persuasive copy, blog posts, essays, and stories.
-   - 💼 **Career & Interview Coach**: Resume optimization and behavioral interview preparation using the STAR method.
-
-4. **🎙️ Voice Interaction (Speech-to-Text & Text-to-Speech)**:
-   - **Voice Input**: Click the microphone icon to dictate questions directly via Web Speech API (`webkitSpeechRecognition`).
-   - **Voice Read-Aloud**: Click the "Read Aloud" button on any response to have the assistant speak it back using browser `speechSynthesis`.
-
-5. **📄 Document Attachment & Q&A (RAG-Lite)**:
-   - Upload PDF, CSV, TXT, or code files.
-   - Automatically extracts and indexes textual contents using `pypdf` into conversational context memory.
-
-6. **🧠 Dual AI Engine (Live & Offline)**:
-   - **Google Gemini API**: Connect your free Google Gemini API key in Settings for live cloud generative AI.
-   - **Offline Smart Intelligence Engine**: Zero-setup fallback engine that generates deep, formatted answers even without an internet connection or API key — ensuring 100% reliability during college vivas, live project demos, and portfolio reviews.
-
-7. **💾 Session Persistence & Export**:
-   - Saves all chats automatically in your browser's local storage.
-   - Rename, switch, or delete previous conversation sessions.
-   - 1-Click export to Markdown (`.md`) files.
+An enterprise-ready, full-stack conversational AI assistant engineered with an asynchronous Python FastAPI backend, real-time Server-Sent Events (SSE) token streaming, client-side Web Speech recognition/synthesis, and document context ingestion (RAG-lite). The frontend implements a responsive, minimal, three-panel workspace with light and dark theme switching, built with vanilla web technologies for zero compile-step deployment.
 
 ---
 
-## 🛠️ Architecture & Tech Stack
+## Table of Contents
+
+- [Executive Summary](#executive-summary)
+- [System Architecture](#system-architecture)
+- [Key Features](#key-features)
+- [Technology Stack](#technology-stack)
+- [Directory Structure](#directory-structure)
+- [Installation and Setup](#installation-and-setup)
+- [API Reference](#api-reference)
+- [Operational Mechanisms](#operational-mechanisms)
+- [Portfolio and Viva Defense Guide](#portfolio-and-viva-defense-guide)
+- [License](#license)
+
+---
+
+## Executive Summary
+
+The **AI-Powered Chatbot Assistant** addresses the operational need for a responsive, modular, and resilient conversational AI workspace. Unlike standard monolithic chat interfaces that fail when third-party API quotas deplete, this system employs a dual-inference strategy:
+
+1. **Cloud LLM Pipeline**: Integrates directly with Google Gemini 1.5 Flash via official asynchronous REST streaming endpoints.
+2. **Contextual Fallback Engine**: A zero-dependency heuristic reasoning core that guarantees system continuity and high-quality structured outputs during offline evaluation, academic defense, and live demonstrations.
+
+The user interface adheres to contemporary software design principles: uncluttered visual hierarchy, Plus Jakarta Sans typography, segmented light/dark theme switches, dedicated history navigation, and integrated audio controls.
+
+---
+
+## System Architecture
 
 ```text
-┌─────────────────────────────────────────────────────────────┐
-│                 Frontend (HTML5 / CSS3 / ES6)               │
-│  - Dark Theme Glassmorphism, Inter / Outfit Typography      │
-│  - SSE Streaming Consumer & Markdown Renderer               │
-│  - Web Speech API (STT & TTS)                               │
-└──────────────────────────────┬──────────────────────────────┘
-                               │ HTTP / SSE Stream
-┌──────────────────────────────▼──────────────────────────────┐
-│                  Backend (Python FastAPI)                   │
-│  - Asynchronous Uvicorn Server (Port 8000)                  │
-│  - Endpoints: /api/chat/stream, /api/upload, /api/personas  │
-│  - Document Extractor (pypdf for PDF, UTF-8 text parser)    │
-└──────────────────────────────┬──────────────────────────────┘
-                               │
-            ┌──────────────────┴──────────────────┐
-            ▼                                     ▼
-┌──────────────────────────────┐     ┌─────────────────────────────┐
-│    Google Gemini API / Groq  │     │  Built-in Offline Engine    │
-│  - Real-time LLM API         │     │  - Zero API Key Needed      │
-│  - Streaming generation      │     │  - 100% Reliable for Demos  │
-└──────────────────────────────┘     └─────────────────────────────┘
++-------------------------------------------------------------------------+
+|                       Client Tier (Browser Runtime)                     |
+|                                                                         |
+|  +---------------------+   +---------------------+   +---------------+  |
+|  | Navigation Sidebar  |   | Chat & Stream Canvas|   | Projects Rail |  |
+|  | - Personas Selector |   | - Pastel Task Cards |   | - Search      |  |
+|  | - Theme Switcher    |   | - Input Dock        |   | - Session List|  |
+|  | - User Workspace    |   | - Voice STT / TTS   |   | - Export .md  |  |
+|  +---------------------+   +---------------------+   +---------------+  |
++------------------------------------+------------------------------------+
+                                     |
+                                     | HTTP / SSE Stream (/api/chat/stream)
+                                     v
++-------------------------------------------------------------------------+
+|                    Application Tier (FastAPI / Uvicorn)                 |
+|                                                                         |
+|  +-------------------+  +---------------------+  +-------------------+  |
+|  | Static File Server|  | Document Ingestion  |  | Chat Controller   |  |
+|  | - HTML5 / CSS3 /JS|  | - PyPDF / Text Extr.|  | - SSE Generator   |  |
+|  +-------------------+  +---------------------+  +-------------------+  |
++------------------------------------+------------------------------------+
+                                     |
+                                     | Dispatched via AIEngine
+                                     v
++-------------------------------------------------------------------------+
+|                            Inference Tier                               |
+|                                                                         |
+|          +----------------------------+  +----------------------------+ |
+|          | Google Gemini API Provider |  | Offline Contextual Engine  | |
+|          | - Live LLM Token Stream    |  | - Heuristic Synthesis Core | |
+|          | - External API via httpx   |  | - Zero External Dependency | |
+|          +----------------------------+  +----------------------------+ |
++-------------------------------------------------------------------------+
 ```
 
 ---
 
-## 📁 Project Directory Structure
+## Key Features
+
+- **Real-Time Token Streaming**: Implements Server-Sent Events (`text/event-stream`) for incremental token delivery, minimizing perceived latency and providing a typewriter presentation.
+- **Multi-Persona Profiles**:
+  - `General Assistant`: Balanced reasoning, general Q&A, and task organization.
+  - `Senior Code Architect`: Generates clean, type-annotated code with time/space complexity analysis.
+  - `Academic Tutor`: Breaks down complex concepts through structured analogies and foundational proofs.
+  - `Creative & Content Writer`: Produces executive summaries, persuasive marketing copy, and documentation.
+  - `Career & Interview Coach`: Refines resumes and structures behavioral interview responses via the STAR framework.
+- **Voice Capabilities**:
+  - **Speech-to-Text (STT)**: Direct voice dictation using browser native `SpeechRecognition` API.
+  - **Text-to-Speech (TTS)**: Clean audio synthesis using the `SpeechSynthesis` API with selectable browser voices.
+- **Document Context Ingestion (RAG-Lite)**: Supports PDF, CSV, TXT, and source code file uploads. Text is parsed on the backend via `pypdf`, bound to the conversational context window, and queried with targeted prompts.
+- **Session Management and Export**: Fully client-side persisted sessions in `localStorage`, real-time title search, and one-click Markdown (`.md`) export.
+- **Design System**: Modular light and dark mode styling with custom CSS properties, Plus Jakarta Sans typography, and responsive three-panel workspace.
+
+---
+
+## Technology Stack
+
+| Layer | Component | Version | Purpose |
+| :--- | :--- | :--- | :--- |
+| **Backend** | Python | 3.10+ | Core language runtime |
+| **Backend Framework** | FastAPI | 0.110+ | Asynchronous ASGI REST & SSE endpoints |
+| **ASGI Server** | Uvicorn | 0.28+ | High-throughput asynchronous server |
+| **HTTP Client** | HTTPX | 0.27+ | Asynchronous communication with Gemini API |
+| **Document Parsing** | PyPDF | 4.0+ | Binary PDF text extraction and indexing |
+| **Validation** | Pydantic | 2.6+ | Request and response schema enforcement |
+| **Frontend Runtime** | Vanilla ES6+ | Modern | Client-side controller and SSE consumer |
+| **Styling** | Vanilla CSS3 | Modern | Custom design tokens, light/dark themes |
+| **Audio Services** | Web Speech API | Native | Browser-level STT and TTS |
+
+---
+
+## Directory Structure
 
 ```text
 Al-Powered Chatbot Assistant/
-├── main.py              # FastAPI application server & REST/SSE endpoints
-├── ai_engine.py         # AI provider dispatch (Gemini API & Offline Engine)
-├── requirements.txt     # Python package dependencies
-├── run.bat              # 1-Click launcher script for Windows
-├── README.md            # Project guide and documentation
-└── static/
-    ├── index.html       # Single-page modern Chatbot web interface
-    ├── style.css        # Glassmorphic dark styling & responsive rules
-    └── app.js           # Client-side streaming controller, STT/TTS & state
+|-- .env.example            # Environment configuration template
+|-- .gitignore              # Git ignore rules (Python cache, OS files)
+|-- README.md               # System documentation and operational guide
+|-- ai_engine.py            # AI dispatch engine (Cloud API & offline inference)
+|-- main.py                 # FastAPI application server and endpoints
+|-- requirements.txt        # Production dependency manifest
+|-- run.bat                 # One-click Windows startup batch script
+`-- static/
+    |-- app.js              # Client state, streaming controller, STT/TTS
+    |-- index.html          # Semantic HTML5 single-page application layout
+    `-- style.css           # Design system tokens, light/dark themes, layout
 ```
 
 ---
 
-## 🚀 How to Run the Project
+## Installation and Setup
 
-### Method 1: 1-Click Windows Launcher (Easiest)
-Simply double-click the **`run.bat`** file in the project folder. It will start the server and automatically launch your default browser at `http://localhost:8000`.
+### Prerequisites
+- Python 3.10 or higher installed. Ensure Python is added to the system `PATH`.
+- Modern Chromium-based browser (Google Chrome, Microsoft Edge, Brave) for full Web Speech API compatibility.
 
-### Method 2: Terminal / Command Line
-1. Open PowerShell or Command Prompt in this folder:
-   ```bash
-   cd "c:\Users\sacha\OneDrive\Desktop\Al-Powered Chatbot Assistant"
-   ```
-2. Start the FastAPI server:
-   ```bash
-   python main.py
-   ```
-3. Open your browser and navigate to:
+### 1. Clone the Repository
+```bash
+git clone https://github.com/AyushSachan726/Al-Powered-Chatbot-Assistant.git
+cd Al-Powered-Chatbot-Assistant
+```
+
+### 2. Set Up Virtual Environment (Recommended)
+```bash
+python -m venv venv
+# On Windows:
+venv\Scripts\activate
+# On Linux/macOS:
+source venv/bin/activate
+```
+
+### 3. Install Dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Configure Environment (Optional)
+Create a `.env` file from the provided template:
+```bash
+copy .env.example .env
+```
+Add your Google Gemini API key if live cloud generation is desired:
+```env
+GEMINI_API_KEY=your_gemini_api_key_here
+PORT=8000
+```
+
+### 5. Launch the Application
+#### Windows One-Click:
+Double-click `run.bat` in the project root.
+
+#### Command Line:
+```bash
+python main.py
+```
+Navigate to:
+```text
+http://localhost:8000
+```
+
+---
+
+## API Reference
+
+### 1. System Health
+- **Endpoint**: `GET /api/health`
+- **Response**:
+```json
+{
+  "status": "online",
+  "service": "AI-Powered Chatbot Assistant",
+  "personas_available": 5,
+  "version": "1.0.0"
+}
+```
+
+### 2. List Personas
+- **Endpoint**: `GET /api/personas`
+- **Response**:
+```json
+[
+  {
+    "id": "general",
+    "name": "General Assistant",
+    "avatar": "AI",
+    "badge": "Versatile & Smart",
+    "system_prompt": "...",
+    "welcome": "..."
+  }
+]
+```
+
+### 3. Streaming Chat (Server-Sent Events)
+- **Endpoint**: `POST /api/chat/stream`
+- **Content-Type**: `application/json`
+- **Request Body**:
+```json
+{
+  "messages": [
+    { "role": "user", "content": "Explain binary search trees." }
+  ],
+  "persona": "coder",
+  "doc_context": null,
+  "api_key": null,
+  "provider": "gemini"
+}
+```
+- **Stream Output**:
+```text
+data: {"token": "Binary "}
+
+data: {"token": "search "}
+
+data: {"token": "trees..."}
+
+data: {"done": true}
+```
+
+### 4. Document Ingestion
+- **Endpoint**: `POST /api/upload`
+- **Content-Type**: `multipart/form-data`
+- **Form Data**: `file=@specification.pdf`
+- **Response**:
+```json
+{
+  "status": "success",
+  "filename": "specification.pdf",
+  "word_count": 1420,
+  "text": "Extracted document text..."
+}
+```
+
+---
+
+## Operational Mechanisms
+
+### Server-Sent Events (SSE) vs. WebSockets
+The application adopts **Server-Sent Events (SSE)** over WebSockets for response streaming:
+1. **Unidirectional Simplicity**: Chat interactions follow a request-response paradigm where the client issues a single payload and the server streams the generated tokens. Full-duplex communication (WebSockets) is unnecessary and introduces connection state overhead.
+2. **HTTP/2 Transport Compatibility**: SSE runs over standard HTTP protocols, eliminating proxy, load-balancer, and firewall blocking issues common with custom WebSocket handshakes.
+3. **Native Reconnection**: Browsers support standard event source recovery protocols inherently.
+
+### Document Ingestion & RAG-Lite Pipeline
+When a user uploads a file (`.pdf`, `.txt`, `.csv`, `.md`):
+1. The backend inspects the MIME type and file header.
+2. If binary PDF, `pypdf.PdfReader` iterates through pages, extracting raw text streams.
+3. Text is normalized and bound to a safety limit (8,000 words) to prevent token window overflow.
+4. The extracted document is injected into the model's system prompt context:
    ```text
-   http://localhost:8000
+   Context Document:
+   ---
+   [Extracted Text Content]
+   ---
+   Answer user queries utilizing the context above when relevant.
    ```
 
 ---
 
-## 🔑 Setting up Live Google Gemini API (Optional)
+## Portfolio and Viva Defense Guide
 
-1. Open the Chatbot in your browser.
-2. Click the **Settings (⚙️)** button in the top right or sidebar footer.
-3. Select **Google Gemini 1.5 Flash**.
-4. Paste your free Gemini API key from [Google AI Studio](https://aistudio.google.com/).
-5. Click **Save Changes**.
-*(Note: If no API key is provided, the assistant continues to function smoothly using its built-in offline intelligence engine).*
+### STAR Interview Defense Summary
+
+- **Situation**: Most student or junior engineer chatbot projects consist of simple wrapper scripts around third-party APIs with no fallback mechanism, rudimentary styling, and vulnerability to network/quota failure during evaluations.
+- **Task**: Architect and implement an enterprise-standard conversational AI application with streaming responses, multi-persona selection, document ingestion, and complete resilience against external API failures.
+- **Action**:
+  - Developed an asynchronous backend using **FastAPI** and **Uvicorn** to facilitate non-blocking Server-Sent Events.
+  - Implemented client-side voice transcription and audio synthesis via the **Web Speech API**.
+  - Designed a decoupled dual-inference pipeline in `ai_engine.py` providing instant cloud LLM capabilities alongside a deterministic offline synthesis engine.
+  - Constructed a lightweight, zero-dependency frontend using **HTML5**, **Vanilla CSS3**, and **ES6 JavaScript**, adhering strictly to modern enterprise dashboard ergonomics.
+- **Result**: Delivered a 100% reliable full-stack application capable of running locally with one click, supporting PDF question answering, voice conversations, and seamless light/dark theme switching.
 
 ---
 
-## 🎓 Viva & Interview Talking Points
+## License
 
-- **Why Server-Sent Events (SSE) over WebSockets?**: For a chatbot, streaming data is unidirectional (server to client). SSE is built on standard HTTP, supports automatic reconnection, and avoids the socket handshake complexity and proxy overhead of WebSockets.
-- **How is Document Q&A implemented?**: Uploaded files are parsed by `pypdf` on the backend, truncated to fit the token window, and dynamically injected into the system instruction prompt alongside conversational memory.
-- **Zero-Dependency Demo Reliability**: The system includes a decoupled heuristic intelligence engine so the project never fails in live viva situations if an API quota is exhausted or internet connectivity drops.
+Distributed under the MIT License. See `LICENSE` for more information.

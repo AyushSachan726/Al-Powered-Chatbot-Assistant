@@ -13,47 +13,47 @@ import time
 import httpx
 from typing import AsyncGenerator, List, Dict, Any, Optional
 
-# Predefined Personas
+# Predefined Personas (Clean, Corporate, Professional)
 PERSONAS: Dict[str, Dict[str, str]] = {
     "general": {
         "id": "general",
         "name": "General Assistant",
-        "avatar": "🤖",
+        "avatar": "AI",
         "badge": "Versatile & Smart",
         "system_prompt": "You are an intelligent, helpful, and courteous AI Assistant. Provide accurate, clear, and comprehensive answers formatted cleanly in Markdown.",
-        "welcome": "Hello! I am your AI-Powered Chatbot Assistant. How can I help you today? You can ask questions, write code, brainstorm, or upload documents!"
+        "welcome": "Hello. I am your AI-Powered Chatbot Assistant. How can I assist you today? You can query information, write code, brainstorm, or upload documents for contextual analysis."
     },
     "coder": {
         "id": "coder",
         "name": "Senior Code Architect",
-        "avatar": "💻",
+        "avatar": "DEV",
         "badge": "Python, JS, C++, Full-Stack",
         "system_prompt": "You are an expert Senior Software Engineer and Architect. Provide elegant, clean, well-commented, and production-grade code. Include explanations of time/space complexity and best practices.",
-        "welcome": "Ready to build! What are we programming today? Ask me to write algorithms, debug errors, build APIs, or explain architecture patterns."
+        "welcome": "Ready to build. What software system are we programming today? Ask me to construct algorithms, debug errors, build APIs, or explain architectural patterns."
     },
     "tutor": {
         "id": "tutor",
         "name": "Academic Tutor & Explainer",
-        "avatar": "🎓",
-        "badge": "Concepts & Study Buddy",
-        "system_prompt": "You are an encouraging, patient university tutor. Explain complex technical, mathematical, scientific, and business concepts using intuitive analogies, step-by-step proofs, and practical real-world examples.",
-        "welcome": "Welcome! What topic or subject would you like to master today? Let's break it down together step-by-step."
+        "avatar": "EDU",
+        "badge": "Concepts & Study",
+        "system_prompt": "You are an encouraging, patient academic tutor. Explain complex technical, mathematical, scientific, and business concepts using intuitive analogies, step-by-step proofs, and practical real-world examples.",
+        "welcome": "Welcome. What concept or academic subject would you like to master today? Let us break it down systematically."
     },
     "writer": {
         "id": "writer",
         "name": "Creative & Content Writer",
-        "avatar": "✍️",
-        "badge": "Copywriting, Blogs & Stories",
-        "system_prompt": "You are a master creative writer, editor, and marketer. Craft engaging, persuasive, articulate, and beautifully phrased copy, articles, essays, and stories.",
-        "welcome": "Greetings! Need an article, engaging story, email draft, or persuasive social copy? Let's write something memorable!"
+        "avatar": "TXT",
+        "badge": "Copywriting, Blogs & Reports",
+        "system_prompt": "You are an articulate technical and creative writer, editor, and marketer. Craft engaging, persuasive, and structured copy, reports, essays, and executive documentation.",
+        "welcome": "Greetings. Whether you require an executive summary, product brief, or technical whitepaper, let us draft compelling content."
     },
     "career": {
         "id": "career",
         "name": "Career & Interview Coach",
-        "avatar": "💼",
+        "avatar": "PRO",
         "badge": "Resume, Prep & Growth",
         "system_prompt": "You are an executive career advisor and technical interview coach. Provide actionable resume reviews, behavioral interview strategies, STAR-method answers, and career progression advice.",
-        "welcome": "Hello! I'm here to boost your career. Whether you need resume tips, mock interview practice, or salary negotiation advice, I've got your back."
+        "welcome": "Hello. I am here to help you advance your career. Whether you need resume refinement, mock interview preparation, or salary negotiation tactics, let us begin."
     }
 }
 
@@ -155,7 +155,6 @@ class AIEngine:
                     if not line:
                         continue
                     buffer += line
-                    # Look for JSON objects in streamed array
                     try:
                         clean_line = line.strip()
                         if clean_line.startswith("["):
@@ -211,18 +210,18 @@ class AIEngine:
         total_words = len(context.split())
         preview = "\n".join(lines[:6]) if len(lines) >= 6 else context
 
-        return f"""### 📄 Document Analysis & Insights
+        return f"""### Document Analysis & Insights
 
-I have processed your uploaded document (**{total_words} words** indexed). Here are the key findings relevant to your question:
+I have processed your uploaded document (**{total_words} words** indexed). Here are the key findings relevant to your query:
 
 > **Query:** *"{query}"*
 
-#### 1. Key Document Summary
+#### 1. Document Overview
 {f"The document discusses key topics starting with:\n```\n{preview}\n```" if total_words > 10 else "The provided document contains specific details matching your query."}
 
-#### 2. Analysis & Answer
+#### 2. Analysis & Response
 Based on the document context provided:
-- **Main Context**: The extracted data highlights key facts, attributes, and operational items.
+- **Main Context**: The extracted data highlights key operational attributes and parameters.
 - **Direct Answer**: {self._extract_relevant_snippet(query, context)}
 - **Recommendations**: For comprehensive evaluations, you can query specific sections, request summaries, or ask for extraction in structured JSON/table format.
 
@@ -243,61 +242,61 @@ Based on the document context provided:
 
         # 1. Greetings
         if any(w in lower_msg for w in ["hi", "hello", "hey", "namaste", "kese ho", "who are you"]):
-            return f"""## Hello! 👋
+            return f"""## Welcome
 
 I am your **{persona['name']}** ({persona['badge']}). 
 
-### What I can help you with today:
-- 💡 **Instant Answers & Reasoning**: Break down any topic or concept clearly.
-- 💻 **Full-Stack Programming**: Write, debug, and optimize Python, JavaScript, SQL, C++, and more.
-- 📊 **Data & Document Intelligence**: Upload PDFs, CSVs, or text files for instant analysis and Q&A.
-- 🎙️ **Voice Conversations**: Talk to me directly using the microphone button or listen to answers.
-- ⚙️ **Custom AI Personas**: Switch between Developer, Tutor, Writer, or Career Coach in the sidebar.
+### Available Capabilities:
+- **Reasoning & Synthesis**: Clear, structured breakdowns of technical and business topics.
+- **Full-Stack Programming**: Write, debug, and optimize Python, JavaScript, SQL, C++, and more.
+- **Data & Document Intelligence**: Upload PDFs, CSVs, or text files for instant analysis and Q&A.
+- **Voice Conversations**: Dictate directly via microphone or utilize audio speech synthesis.
+- **Specialized Personas**: Switch between Developer, Tutor, Writer, or Career Coach in the sidebar.
 
-*Feel free to ask a question, ask for code, or describe a problem you are trying to solve!*"""
+*Please state your inquiry, request code, or specify a problem you would like to analyze.*"""
 
         # 2. Project creation / How to make this project queries
         if any(w in lower_msg for w in ["kese banaye", "how to make", "project banana", "build this project", "ye project"]):
-            return f"""## 🚀 AI-Powered Chatbot Assistant: Complete Project Blueprint
+            return f"""## AI-Powered Chatbot Assistant: System Architecture Blueprint
 
-Yeh project modern web technologies aur AI architectures ka ek combination hai. Is project ko build karne aur samajhne ke liye complete breakdown:
+This application integrates modern full-stack web engineering with decoupled AI inference pipelines:
 
 ### 1. Architecture Stack
-- **Frontend**: HTML5, CSS3 (Modern Glassmorphism + Dark Mode), ES6+ JavaScript.
-- **Backend API**: Python **FastAPI** + **Uvicorn** (Asynchronous, lightning fast, SSE streaming).
-- **AI Core**: 
-  - **Live Mode**: Google Gemini 1.5 Flash API (Streaming responses via Server-Sent Events).
-  - **Offline/Demo Engine**: Zero-setup intelligent heuristics for robust viva and portfolio demos.
-- **Voice Engine**: Web Speech API (`webkitSpeechRecognition` & `speechSynthesis`).
-- **Document Analysis (RAG-Lite)**: `pypdf` for parsing uploaded PDFs and text context.
+- **Frontend**: HTML5, Vanilla CSS3 (Custom Design System with Light/Dark Themes), Modern ES6+ JavaScript.
+- **Backend API**: Python **FastAPI** + **Uvicorn** (Asynchronous event loop, Server-Sent Events for streaming).
+- **AI Engine**: 
+  - **Live Mode**: Google Gemini 1.5 Flash API (Direct token streaming over HTTP/2).
+  - **Offline Engine**: Contextual heuristic synthesis engine ensuring zero downtime for live demonstrations.
+- **Voice Pipeline**: Web Speech API (`webkitSpeechRecognition` & `speechSynthesis`).
+- **Document Processing**: `pypdf` extraction pipeline for textual indexing into system prompts.
 
-### 2. Core Workflow
-1. **User Input**: User prompt ya voice input enter karta hai.
-2. **Context Assembly**: Selected **Persona Prompt** + **Uploaded Document Text** + **Chat History** ek unified prompt banate hain.
-3. **Streaming Generation**: Server SSE (Server-Sent Events) ke through tokens real-time stream karta hai.
-4. **Client Rendering**: Markdown parser syntax-highlighted code blocks, copy buttons, aur audio controls render karta hai.
+### 2. Execution Flow
+1. **User Input**: Query entered via keyboard or browser Speech-to-Text dictation.
+2. **Context Assembly**: Selected **Persona Instructions** + **Extracted Document Context** + **Conversational Memory** are structured into payload.
+3. **Streaming Generation**: FastAPI emits Server-Sent Events (SSE) data frames asynchronously.
+4. **Client Rendering**: Markdown parser translates text, highlighted code snippets, and action buttons in real time.
 
-### 3. File Structure
+### 3. Repository Structure
 ```text
 Al-Powered Chatbot Assistant/
-├── main.py              # FastAPI server & endpoints
-├── ai_engine.py         # AI intelligence & Gemini integration
-├── requirements.txt     # Python dependencies
-├── run.bat              # 1-Click launcher
+├── main.py              # FastAPI server & REST/SSE endpoints
+├── ai_engine.py         # AI provider dispatch & offline reasoning
+├── requirements.txt     # Python package dependencies
+├── run.bat              # Windows batch launcher
 ├── static/
-│   ├── index.html       # Responsive ChatGPT-like UI
-│   ├── style.css        # Premium Dark glassmorphism design
-│   └── app.js           # Client controller, STT/TTS, streaming
-└── README.md            # Complete documentation & viva prep
+│   ├── index.html       # Clean single-page interface
+│   ├── style.css        # Minimalist design system
+│   └── app.js           # Client controller & SSE consumer
+└── README.md            # Technical documentation
 ```
 
-*Aap niche diye gaye chat box me koi bhi question type karke test kar sakte hain!*"""
+*You can test queries or explore different personas using the sidebar.*"""
 
         # 3. Coding questions
         if any(w in lower_msg for w in ["code", "python", "javascript", "function", "api", "bug", "algorithm", "react", "html"]):
-            return f"""### 💻 Solution & Code Architecture
+            return f"""### Solution & Code Architecture
 
-Here is the clean, production-grade implementation for your request:
+Here is the production-grade implementation for your request:
 
 ```python
 # Production-ready implementation
@@ -341,80 +340,80 @@ if __name__ == "__main__":
 ```
 
 #### Key Highlights & Best Practices:
-1. **Type Annotations**: Ensures robust code completion and error reduction.
-2. **Time Complexity**: O(N) linear scan for high scalability.
-3. **Defensive Programming**: Handles empty input or missing dictionary keys without crashing.
+1. **Type Annotations**: Ensures robust code completion and reduces runtime errors.
+2. **Time Complexity**: O(N) linear execution for predictable scaling.
+3. **Defensive Programming**: Handles empty inputs or absent dictionary keys gracefully.
 
-*Would you like me to adapt this into another language (e.g. JavaScript, C++, Go) or add unit tests?*"""
+*Would you like to adapt this to another language or generate automated unit tests?*"""
 
         # 4. Tutor Persona
         if pid == "tutor" or any(w in lower_msg for w in ["explain", "samjhao", "what is", "kya hai", "difference", "concept"]):
-            return f"""### 🎓 Deep-Dive Explanation: *Understanding the Core Concept*
+            return f"""### Academic Explanation: Understanding the Core Concept
 
-Let's break down **"{user_msg}"** using first principles and a relatable real-world analogy.
+Let us break down **"{user_msg}"** from first principles using a practical analogy.
 
 ---
 
-#### 🌟 1. The Big Picture (Analogy)
-Imagine a busy restaurant:
-- The **Frontend** is the waiter who takes your order and presents the prepared meal neatly on your table.
-- The **Backend API** is the kitchen manager who verifies the order and routes tasks to chefs.
-- The **AI Engine (LLM)** is the master chef who crafts the customized answer using recipe knowledge.
+#### 1. High-Level Mental Model
+Consider an operational service model:
+- The **Frontend** represents the client interface receiving user requests and rendering structured output.
+- The **Backend API** acts as the orchestrator validating requirements, enforcing business logic, and routing tasks.
+- The **Inference Engine (LLM)** functions as the analytical processor, generating synthesis based on trained weights and active context.
 
-#### 🔍 2. Step-by-Step Breakdown
-1. **Input & Tokenization**: Words are divided into mathematical representations called tokens.
-2. **Contextual Attention**: Neural attention layers evaluate relationships between every word in your sentence.
-3. **Probability Scoring**: Next tokens are generated iteratively based on maximum likelihood and temperature tuning.
-4. **Safety & Formatting**: The final response is structured with markdown and delivered via real-time streaming.
+#### 2. Step-by-Step Technical Breakdown
+1. **Tokenization & Embedding**: Incoming text is split into numeric vectors representing semantic concepts.
+2. **Multi-Head Self-Attention**: Neural attention matrices measure statistical relationships across all input tokens.
+3. **Probability Sampling**: Successive tokens are generated based on maximum likelihood adjusted by temperature.
+4. **Output Sanitization & Streaming**: The final payload is formatted in Markdown and streamed incrementally over SSE.
 
-#### 💡 Key Takeaway
-> Great systems separate user interaction, data validation, and AI computation into modular, decoupled layers.
+#### 3. Architectural Takeaway
+> Well-engineered software decouples presentation, validation, and computational inference into distinct, testable layers.
 
-*Would you like an illustrative diagram or a deeper look into any specific part?*"""
+*Would you like an architectural diagram or further analysis on a specific subcomponent?*"""
 
         # 5. Career / Interview Persona
         if pid == "career" or any(w in lower_msg for w in ["job", "interview", "resume", "career", "salary", "prep"]):
-            return f"""### 💼 Career & Interview Masterclass
+            return f"""### Career & Technical Interview Framework
 
-Here is strategic, high-impact advice for: **"{user_msg}"**
+Here is a structured advisory for: **"{user_msg}"**
 
-#### 🎯 1. The STAR Method Framework
-When discussing projects in technical interviews, structure your response as:
-- **S (Situation)**: What was the business or academic problem you faced?
-- **T (Task)**: What exact milestone or system were you responsible for delivering?
-- **A (Action)**: What technologies, algorithms, and design decisions did you lead?
-- **R (Result)**: What was the measurable outcome (e.g. 50% faster latency, 99.9% uptime, 100+ active users)?
+#### 1. The STAR Method Framework
+When explaining technical projects in interviews, structure responses as:
+- **Situation**: What business or academic problem existed?
+- **Task**: What specific module, system, or milestone were you tasked to deliver?
+- **Action**: What technical decisions, algorithms, and design patterns did you engineer?
+- **Result**: What was the quantifiable outcome (e.g., latency reduction, reliability improvement, user adoption)?
 
-#### 📋 2. Resume Bullet Point Formula
-Use this battle-tested bullet format:
-> *"Architected and deployed an **AI-Powered Chatbot Assistant** using **FastAPI** and **Gemini LLM**, featuring real-time SSE streaming, voice STT/TTS, and multi-persona conversational memory, reducing query resolution time by 40%."*
+#### 2. Resume Achievement Formula
+Use this impactful phrasing:
+> *"Architected and deployed a full-stack **AI-Powered Chatbot Assistant** using **FastAPI** and **Gemini LLM**, implementing Server-Sent Events (SSE) streaming, Web Speech APIs, and document contextual indexing to reduce query turnaround time."*
 
-#### 🚀 3. Next Steps to Stand Out
-- Have a live deployed demo or GitHub repository link ready on your CV.
-- Be prepared to explain architectural trade-offs (e.g., SSE vs WebSockets, RAG vs fine-tuning).
+#### 3. Recommended Preparations
+- Maintain an active GitHub repository with clear architectural documentation.
+- Prepare to discuss design trade-offs (e.g., Server-Sent Events vs WebSockets, RAG vs Fine-Tuning).
 
-*Would you like to practice a mock interview question together right now?*"""
+*Would you like to conduct a simulated interview question together?*"""
 
-        # 6. Default general intelligent response
-        return f"""### 🤖 Analysis & Response
+        # 6. Default general response
+        return f"""### Technical Analysis & Response
 
 Regarding your query: **"{user_msg}"**
 
-Here is a structured overview addressing your point:
+Here is a structured assessment:
 
-1. **Core Insight**:
-   - Modern conversational AI combines prompt engineering, contextual state management, and real-time streaming interfaces.
-   - Decoupled architectures allow seamless switching between commercial APIs (Gemini, OpenAI, Groq) and local open-source models.
+1. **Core Concept**:
+   - Modern conversational software combines targeted prompt design, stateless streaming communication, and contextual document indexing.
+   - Decoupled backends allow seamless transitions between cloud API endpoints (Google Gemini, Groq, OpenAI) and local fallback engines.
 
-2. **Actionable Recommendations**:
-   - For interactive testing, try switching the **Persona** in the sidebar to see how the assistant adapts tone and depth.
-   - Attach a document (PDF, CSV, or TXT) via the attachment icon to test real-time document comprehension.
-   - Click the **Microphone** icon to test voice dictation directly from your browser.
+2. **Available Actions**:
+   - Change the **Persona** in the navigation panel to adapt response tone and depth.
+   - Attach documents (PDF, CSV, TXT) via the attachment control for contextual question answering.
+   - Use the voice controls for speech-to-text input and text-to-speech playback.
 
-3. **Customization & Configuration**:
-   - You can enter your own free Google Gemini API key in **Settings (⚙️)** anytime for live generative AI capabilities.
+3. **System Configuration**:
+   - You can configure your Google Gemini API key anytime via the **Settings** panel.
 
-*Let me know how you'd like to proceed or what specific detail you want to explore next!*"""
+*Please let me know which aspect you would like to explore in further detail.*"""
 
 
 # Global singleton

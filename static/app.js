@@ -146,11 +146,11 @@
             }
         } catch (e) {
             STATE.personas = {
-                general: { id: 'general', name: 'General Assistant', avatar: '🤖', badge: 'Versatile' },
-                coder: { id: 'coder', name: 'Code Architect', avatar: '💻', badge: 'Python, JS' },
-                tutor: { id: 'tutor', name: 'Academic Tutor', avatar: '🎓', badge: 'Concepts' },
-                writer: { id: 'writer', name: 'Creative Writer', avatar: '✍️', badge: 'Copy & Content' },
-                career: { id: 'career', name: 'Career Coach', avatar: '💼', badge: 'Interviews' }
+                general: { id: 'general', name: 'General Assistant', avatar: 'AI', badge: 'Versatile' },
+                coder: { id: 'coder', name: 'Code Architect', avatar: 'DEV', badge: 'Python, JS' },
+                tutor: { id: 'tutor', name: 'Academic Tutor', avatar: 'EDU', badge: 'Concepts' },
+                writer: { id: 'writer', name: 'Creative Writer', avatar: 'TXT', badge: 'Copy & Content' },
+                career: { id: 'career', name: 'Career Coach', avatar: 'PRO', badge: 'Interviews' }
             };
         }
         renderPersonaNav();
@@ -326,7 +326,7 @@
 
         const avatar = document.createElement('div');
         avatar.className = 'message-avatar';
-        avatar.textContent = role === 'user' ? '👤' : p.avatar;
+        avatar.textContent = role === 'user' ? 'U' : (p.avatar || 'AI');
 
         const bubble = document.createElement('div');
         bubble.className = 'message-bubble';
@@ -485,7 +485,7 @@
             if (error.name !== 'AbortError') {
                 const cursor = bubble.querySelector('#activeStreamingCursor');
                 if (cursor) cursor.remove();
-                bubble.innerHTML += `<br><blockquote style="border-color: #ef4444; color: #ef4444;">⚠️ Error: ${escapeHtml(error.message)}</blockquote>`;
+                bubble.innerHTML += `<br><blockquote style="border-color: #ef4444; color: #ef4444;">Error: ${escapeHtml(error.message)}</blockquote>`;
             }
         } finally {
             STATE.isStreaming = false;
@@ -659,7 +659,7 @@
             if (selected) utterance.voice = selected;
         }
 
-        btn.innerHTML = `⏹️ Stop`;
+        btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"></rect></svg> Stop`;
         utterance.onend = () => {
             btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg> Read Aloud`;
         };
@@ -679,7 +679,7 @@
         markdown += `*Exported on ${new Date().toLocaleString()}*\n\n---\n\n`;
 
         session.messages.forEach(m => {
-            const sender = m.role === 'user' ? '### 👤 User' : `### 🤖 Assistant`;
+            const sender = m.role === 'user' ? '### User' : '### Assistant';
             markdown += `${sender}\n\n${m.content}\n\n---\n\n`;
         });
 
