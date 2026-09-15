@@ -143,14 +143,16 @@
                 list.forEach(p => {
                     STATE.personas[p.id] = p;
                 });
+            } else {
+                throw new Error('Fallback needed');
             }
         } catch (e) {
             STATE.personas = {
-                general: { id: 'general', name: 'General Assistant', avatar: 'AI', badge: 'Versatile' },
-                coder: { id: 'coder', name: 'Code Architect', avatar: 'DEV', badge: 'Python, JS' },
-                tutor: { id: 'tutor', name: 'Academic Tutor', avatar: 'EDU', badge: 'Concepts' },
+                general: { id: 'general', name: 'General Assistant', avatar: 'AI', badge: 'Versatile & Smart' },
+                coder: { id: 'coder', name: 'Code Architect', avatar: 'DEV', badge: 'Python, JS, C++' },
+                tutor: { id: 'tutor', name: 'Academic Tutor', avatar: 'EDU', badge: 'Concepts & Study' },
                 writer: { id: 'writer', name: 'Creative Writer', avatar: 'TXT', badge: 'Copy & Content' },
-                career: { id: 'career', name: 'Career Coach', avatar: 'PRO', badge: 'Interviews' }
+                career: { id: 'career', name: 'Career Coach', avatar: 'PRO', badge: 'Interviews & Growth' }
             };
         }
         renderPersonaNav();
@@ -394,6 +396,77 @@
         });
     }
 
+    async function handleStaticClientStream(payload, bubble) {
+        let content = '';
+        if (STATE.settings.apiKey) {
+            try {
+                const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent?alt=sse&key=${encodeURIComponent(STATE.settings.apiKey)}`;
+                const geminiPayload = {
+                    contents: payload.messages.map(m => ({
+                        role: m.role === 'assistant' ? 'model' : 'user',
+                        parts: [{ text: m.content }]
+                    }))
+                };
+                const geminiRes = await fetch(geminiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(geminiPayload),
+                    signal: STATE.abortController ? STATE.abortController.signal : null
+                });
+                if (geminiRes.ok) {
+                    const reader = geminiRes.body.getReader();
+                    const decoder = new TextDecoder();
+                    while (true) {
+                        const { value, done } = await reader.read();
+                        if (done) break;
+                        const chunk = decoder.decode(value, { stream: true });
+                        const lines = chunk.split('\n');
+                        for (const line of lines) {
+                            if (line.startsWith('data: ')) {
+                                const jsonStr = line.slice(6).trim();
+                                if (!jsonStr || jsonStr === '[DONE]') continue;
+                                try {
+                                    const data = JSON.parse(jsonStr);
+                                    const token = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                                    if (token) {
+                                        content += token;
+                                        bubble.innerHTML = renderMarkdown(content) + '<span class="streaming-cursor" id="activeStreamingCursor"></span>';
+                                        scrollToBottom();
+                                    }
+                                } catch (e) {}
+                            }
+                        }
+                    }
+                    const cursor = bubble.querySelector('#activeStreamingCursor');
+                    if (cursor) cursor.remove();
+                    return content;
+                }
+            } catch (err) {
+                console.warn('Direct Gemini API stream failed, falling back to offline simulation:', err);
+            }
+        }
+
+        const prompt = payload.messages[payload.messages.length - 1].content;
+        const personaName = (STATE.personas[STATE.activePersona] || {}).name || 'AI Assistant';
+        const simulated = `### Response (${personaName})\n\n` +
+            `Hello! I received your query: **"${prompt.replace(/</g, '&lt;')}"**.\n\n` +
+            `You are currently running the **client-side interface hosted on GitHub Pages**.\n\n` +
+            `- **To enable live Gemini AI answers directly in this browser window:** Open **Settings** (gear icon on the left navigation), paste your free Google Gemini API key, and click **Save Changes**.\n` +
+            `- **To run the full FastAPI backend with document intelligence:** Run \`run.bat\` or \`python main.py\` locally, or deploy this repository to **Render** or **Hugging Face Spaces**.\n\n` +
+            `*All interface features (Persona switching, Voice input/output, Chat history, and Markdown export) are fully active.*`;
+
+        for (let i = 0; i < simulated.length; i += 5) {
+            if (STATE.abortController && STATE.abortController.signal.aborted) break;
+            content += simulated.slice(i, i + 5);
+            bubble.innerHTML = renderMarkdown(content) + '<span class="streaming-cursor" id="activeStreamingCursor"></span>';
+            scrollToBottom();
+            await new Promise(r => setTimeout(r, 12));
+        }
+        const cursor = bubble.querySelector('#activeStreamingCursor');
+        if (cursor) cursor.remove();
+        return content;
+    }
+
     // --- Sending Messages & SSE Streaming ---
     async function sendMessage() {
         const text = elements.chatInput.value.trim();
@@ -429,52 +502,62 @@
         STATE.abortController = new AbortController();
 
         try {
-            const response = await fetch('/api/chat/stream', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-                signal: STATE.abortController.signal
-            });
+            let handledByStatic = false;
+            let response = null;
 
-            if (!response.ok) {
-                throw new Error(`Server returned status ${response.status}`);
+            try {
+                response = await fetch('/api/chat/stream', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                    signal: STATE.abortController.signal
+                });
+            } catch (netErr) {
+                // If endpoint doesn't exist (e.g. GitHub Pages static hosting)
+                handledByStatic = true;
             }
 
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            let doneStreaming = false;
+            if (handledByStatic || (response && (response.status === 404 || response.status === 405))) {
+                assistantContent = await handleStaticClientStream(payload, bubble);
+            } else if (!response.ok) {
+                throw new Error(`Server returned status ${response.status}`);
+            } else {
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let doneStreaming = false;
 
-            while (!doneStreaming) {
-                const { value, done } = await reader.read();
-                if (done) break;
+                while (!doneStreaming) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
 
-                const chunkText = decoder.decode(value, { stream: true });
-                const lines = chunkText.split('\n');
+                    const chunkText = decoder.decode(value, { stream: true });
+                    const lines = chunkText.split('\n');
 
-                for (const line of lines) {
-                    if (line.startsWith('data: ')) {
-                        const jsonStr = line.slice(6).trim();
-                        if (!jsonStr) continue;
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            const jsonStr = line.slice(6).trim();
+                            if (!jsonStr) continue;
 
-                        try {
-                            const data = JSON.parse(jsonStr);
-                            if (data.token) {
-                                assistantContent += data.token;
-                                bubble.innerHTML = renderMarkdown(assistantContent) + '<span class="streaming-cursor" id="activeStreamingCursor"></span>';
-                                scrollToBottom();
+                            try {
+                                const data = JSON.parse(jsonStr);
+                                if (data.token) {
+                                    assistantContent += data.token;
+                                    bubble.innerHTML = renderMarkdown(assistantContent) + '<span class="streaming-cursor" id="activeStreamingCursor"></span>';
+                                    scrollToBottom();
+                                }
+                                if (data.done) {
+                                    doneStreaming = true;
+                                }
+                            } catch (err) {
+                                // ignore partial JSON in SSE line
                             }
-                            if (data.done) {
-                                doneStreaming = true;
-                            }
-                        } catch (err) {
-                            // ignore partial JSON in SSE line
                         }
                     }
                 }
-            }
 
-            const cursor = bubble.querySelector('#activeStreamingCursor');
-            if (cursor) cursor.remove();
+                const cursor = bubble.querySelector('#activeStreamingCursor');
+                if (cursor) cursor.remove();
+            }
 
             session.messages.push({ role: 'assistant', content: assistantContent, timestamp: Date.now() });
             saveSessionsToStorage();
