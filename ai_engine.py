@@ -58,8 +58,27 @@ PERSONAS: Dict[str, Dict[str, str]] = {
 }
 
 
+def _load_env_file():
+    env_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+    if os.path.exists(env_file):
+        try:
+            with open(env_file, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith("#") and "=" in line:
+                        k, v = line.split("=", 1)
+                        k, v = k.strip(), v.strip()
+                        if k and k not in os.environ:
+                            os.environ[k] = v
+        except Exception:
+            pass
+
+_load_env_file()
+
+
 class AIEngine:
     def __init__(self):
+        _load_env_file()
         self.default_gemini_key = os.getenv("GEMINI_API_KEY", "")
 
     async def generate_response(
@@ -95,7 +114,7 @@ class AIEngine:
         If api_key is available, calls live Gemini API.
         Otherwise, yields high-quality contextual offline response.
         """
-        active_key = (api_key or self.default_gemini_key).strip()
+        active_key = (api_key or os.getenv("GEMINI_API_KEY", "") or self.default_gemini_key).strip()
         persona = PERSONAS.get(persona_id, PERSONAS["general"])
 
         if active_key and provider == "gemini":
@@ -117,8 +136,14 @@ class AIEngine:
         doc_context: Optional[str],
         api_key: str
     ) -> AsyncGenerator[str, None]:
-        """Stream from official Google Gemini API"""
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent?key={api_key}"
+        """Stream from official Google Gemini API with multi-model fallback"""
+        candidate_models = [
+            "gemini-3.6-flash",
+            "gemini-3-flash-preview",
+            "gemini-flash-latest",
+            "gemini-2.5-flash",
+            "gemini-1.5-flash"
+        ]
 
         # Construct contents for Gemini
         system_instruction = persona["system_prompt"]
@@ -144,34 +169,44 @@ class AIEngine:
             }
         }
 
+        last_error = None
         async with httpx.AsyncClient(timeout=60.0) as client:
-            async with client.stream("POST", url, json=payload, headers={"Content-Type": "application/json"}) as response:
-                if response.status_code != 200:
-                    error_data = await response.aread()
-                    raise RuntimeError(f"Gemini API Error {response.status_code}: {error_data.decode('utf-8', errors='ignore')}")
+            for model_name in candidate_models:
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:streamGenerateContent?alt=sse&key={api_key}"
+                try:
+                    async with client.stream("POST", url, json=payload, headers={"Content-Type": "application/json"}) as response:
+                        if response.status_code != 200:
+                            err_text = (await response.aread()).decode("utf-8", errors="ignore")
+                            last_error = f"{model_name} (HTTP {response.status_code}): {err_text}"
+                            continue
 
-                buffer = ""
-                async for line in response.aiter_lines():
-                    if not line:
-                        continue
-                    buffer += line
-                    try:
-                        clean_line = line.strip()
-                        if clean_line.startswith("["):
-                            clean_line = clean_line[1:]
-                        if clean_line.startswith(","):
-                            clean_line = clean_line[1:]
-                        if clean_line.endswith("]"):
-                            clean_line = clean_line[:-1]
-                        if clean_line:
-                            data = json.loads(clean_line)
-                            candidates = data.get("candidates", [])
-                            if candidates:
-                                text = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "")
-                                if text:
-                                    yield text
-                    except Exception:
-                        continue
+                        streamed_any = False
+                        async for line in response.aiter_lines():
+                            line = line.strip()
+                            if not line or not line.startswith("data: "):
+                                continue
+                            json_str = line[6:].strip()
+                            if not json_str or json_str == "[DONE]":
+                                continue
+                            try:
+                                data = json.loads(json_str)
+                                candidates = data.get("candidates", [])
+                                if candidates:
+                                    text = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+                                    if text:
+                                        streamed_any = True
+                                        yield text
+                            except Exception:
+                                continue
+
+                        if streamed_any:
+                            return
+                except Exception as ex:
+                    last_error = str(ex)
+                    continue
+
+        if last_error:
+            raise RuntimeError(f"All Gemini models failed. Last error: {last_error}")
 
     async def _stream_offline_intelligence(
         self,
